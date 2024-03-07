@@ -1,0 +1,4 @@
+bookstore/ filter=lfs diff=lfs merge=lfs -text
+AppData/Local/ConnectedDevicesPlatform/a54764bab6251698/ActivitiesCache.db filter=lfs diff=lfs merge=lfs -text
+File filter=lfs diff=lfs merge=lfs -text
+AppData/Local/Discord/app-1.0.9016/Discord.exe filter=lfs diff=lfs merge=lfs -text
