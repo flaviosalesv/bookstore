@@ -1,14 +1,20 @@
+
+
 import factory
+
 from django.contrib.auth.models import User
 from product.factories import ProductFactory
-from order.models import Order 
+
+from order.models import Order
+
 
 class UserFactory(factory.django.DjangoModelFactory):
     email = factory.Faker('pystr')
     username = factory.Faker('pystr')
 
     class Meta:
-        model = User 
+        model = User
+
 
 class OrderFactory(factory.django.DjangoModelFactory):
     user = factory.SubFactory(UserFactory)
@@ -19,8 +25,8 @@ class OrderFactory(factory.django.DjangoModelFactory):
             return
 
         if extracted:
-            for product in extracted:
-                self.product.add(product)
+            for products in extracted:
+                self.product.add(products)
 
     class Meta:
-        model = Order 
+        model = Order
