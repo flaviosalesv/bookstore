@@ -1,51 +1,68 @@
-# Use a imagem oficial do Python como base
+# `python-base` sets up all our shared environment variables
 FROM python:3.12-slim as python-base
 
-# Defina as variáveis de ambiente compartilhadas
-ENV PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1 \
-    PIP_NO_CACHE_DIR=off \
-    PIP_DISABLE_PIP_VERSION_CHECK=on \
-    PIP_DEFAULT_TIMEOUT=100 \
-    POETRY_VERSION=1.0.3 \
-    POETRY_HOME="/opt/poetry" \
-    POETRY_VIRTUALENVS_IN_PROJECT=true \
-    POETRY_NO_INTERACTION=1 \
-    PYSETUP_PATH="/opt/pysetup" \
-    VENV_PATH="/opt/pysetup/.venv"
 
-# Adicione o diretório do Poetry ao PATH
+  # python
+ENV PYTHONUNBUFFERED=1 \
+  # prevents python creating .pyc files
+  PYTHONDONTWRITEBYTECODE=1 \
+  \
+  # pip
+  PIP_NO_CACHE_DIR=off \
+  PIP_DISABLE_PIP_VERSION_CHECK=on \
+  PIP_DEFAULT_TIMEOUT=100 \
+  \
+  # poetry
+  # https://python-poetry.org/docs/configuration/#using-environment-variables
+  POETRY_VERSION=1.6.1 \
+  # make poetry install to this location
+  POETRY_HOME="/opt/poetry" \
+  # make poetry create the virtual environment in the project's root
+  # it gets named `.venv`
+  POETRY_VIRTUALENVS_IN_PROJECT=true \
+  # do not ask any interactive question
+  POETRY_NO_INTERACTION=1 \
+  \
+  # paths
+  # this is where our requirements + virtual environment will live
+  PYSETUP_PATH="/opt/pysetup" \
+  VENV_PATH="/opt/pysetup/.venv"
+
+
+# prepend poetry and venv to path
 ENV PATH="$POETRY_HOME/bin:$VENV_PATH/bin:$PATH"
 
-# Atualize e instale as dependências necessárias
 RUN apt-get update \
-    && apt-get install --no-install-recommends -y \
-        curl \
-        build-essential \
-        libpq-dev \
-        gcc \
-    && rm -rf /var/lib/apt/lists/*
+  && apt-get install --no-install-recommends -y \
+    # deps for installing poetry
+    curl \
+    # deps for building python deps
+    build-essential
 
-# Instale o Poetry
-RUN pip install poetry
+# install poetry - respects $POETRY_VERSION & $POETRY_HOME
+RUN curl curl -sSL https://install.python-poetry.org | python3 -
 
-# Crie e defina o diretório de trabalho
-WORKDIR /app
+RUN apt-get update \
+  && apt-get -y install libpq-dev gcc \
+  && pip install psycopg2
 
-# Copie os arquivos de dependência do projeto
-COPY poetry.lock pyproject.toml /app/
+# copy project requirement files here to ensure they will be cached.
+WORKDIR $PYSETUP_PATH
+COPY poetry.lock pyproject.toml ./
 
-# Instale as dependências do projeto
+RUN pip install poetry==1.1.4 poetry-core==1.0.8 \
+ && poetry config virtualenvs.create false --local
+
+# install runtime deps - uses $POETRY_VIRTUALENVS_IN_PROJECT internally
 RUN poetry install --no-dev
 
-# Instale o Django
-RUN pip install django
+# quicker install as runtime deps are already installed
+RUN poetry install
 
-# Copie o restante dos arquivos do projeto para o diretório de trabalho
-COPY . /app
+WORKDIR /app
 
-# Exponha a porta 8000 para o mundo exterior
+COPY . /app/
+
 EXPOSE 8000
 
-# Comando padrão para executar a aplicação
 CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
