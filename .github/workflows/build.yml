@@ -1,4 +1,3 @@
-# build.yml
 name: Python application
 
 on: [push]
@@ -34,6 +33,6 @@ jobs:
 
     - name: Test
       env:
-        DJANGO_ALLOWED_HOSTS: "localhost 127.0.0.1 example.com"
+        DJANGO_ALLOWED_HOSTS: 'localhost 127.0.0.1 ebacbookstoreapi-c1249fc84acd.herokuapp.com'
       run: |
         poetry run python manage.py test
