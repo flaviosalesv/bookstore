@@ -10,3 +10,5 @@ class Product(models.Model):
     active = models.BooleanField(default=True)
     category = models.ManyToManyField('product.Category', blank=True)
 
+    def __str__(self):
+        return self.title
